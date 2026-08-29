@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Equipment &amp; Asset Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     DESIGN TOKENS
+     Theme: Electric Emerald / Deep Obsidian
+     ============================================================ */
+  :root{
+    --obsidian-0:#0D1117;   /* page background */
+    --obsidian-1:#161B22;   /* card / surface background */
+    --obsidian-2:#1C2330;   /* raised surface / inputs */
+    --obsidian-3:#242C3A;   /* borders / dividers */
+    --emerald:#10B981;      /* active / good status */
+    --emerald-dim:#0B7A57;
+    --amber:#F59E0B;        /* pending / due soon */
+    --crimson:#EF4444;      /* overdue alerts */
+    --text-hi:#E6EDF3;      /* primary text */
+    --text-mid:#9BA7B4;     /* secondary text */
+    --text-low:#5D6773;     /* tertiary text / placeholders */
+
+    --font-display:'Space Grotesk', sans-serif;
+    --font-body:'Inter', sans-serif;
+    --font-mono:'IBM Plex Mono', monospace;
+
+    --radius-sm:6px;
+    --radius-md:10px;
+    --radius-lg:16px;
+    --shadow-card:0 1px 0 rgba(255,255,255,0.02) inset, 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 12% -10%, rgba(16,185,129,0.10), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(245,158,11,0.06), transparent 35%),
+      var(--obsidian-0);
+    color:var(--text-hi);
+    font-family:var(--font-body);
+    min-height:100vh;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  a{color:inherit;}
+  ::selection{background:rgba(16,185,129,0.35);}
+
+  /* ---------- layout shell ---------- */
+  .shell{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- header / signature strip ---------- */
+  .topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-bottom:28px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .brand-mark{
+    width:44px;height:44px;
+    border-radius:10px;
+    background:linear-gradient(155deg, var(--emerald), var(--emerald-dim));
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    box-shadow:0 6px 18px rgba(16,185,129,0.35);
+  }
+  .brand-mark svg{width:24px;height:24px;}
+  .brand h1{
+    font-family:var(--font-display);
+    font-size:20px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .brand p{
+    margin:2px 0 0;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--text-mid);
+  }
+
+  .header-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    font-weight:600;
+    padding:10px 16px;
+    border-radius:var(--radius-sm);
+    border:1px solid var(--obsidian-3);
+    background:var(--obsidian-2);
+    color:var(--text-hi);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    transition:border-color .15s ease, transform .1s ease, background .15s ease;
+    white-space:nowrap;
+  }
+  .btn svg{width:15px;height:15px;flex-shrink:0;}
+  .btn:hover{border-color:#3A4657; background:#212938;}
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--emerald); outline-offset:2px;}
+
+  .btn-primary{
+    background:linear-gradient(155deg, var(--emerald), var(--emerald-dim));
+    border:1px solid rgba(16,185,129,0.5);
+    color:#04140D;
+  }
+  .btn-primary:hover{filter:brightness(1.08); background:linear-gradient(155deg, var(--emerald), var(--emerald-dim));}
+
+  .btn-ghost{
+    background:transparent;
+    border:1px dashed var(--obsidian-3);
+    color:var(--text-mid);
+  }
+  .btn-ghost:hover{color:var(--text-hi); border-color:var(--text-mid);}
+
+  .btn-danger-text{
+    background:transparent;
+    border:1px solid transparent;
+    color:var(--crimson);
+    padding:6px 10px;
+  }
+  .btn-danger-text:hover{background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.35);}
+
+  input[type="file"]{display:none;}
+
+  /* ---------- stats dashboard ---------- */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:24px;
+  }
+  .stat-card{
+    background:var(--obsidian-1);
+    border:1px solid var(--obsidian-3);
+    border-radius:var(--radius-lg);
+    padding:18px 18px 16px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:var(--shadow-card);
+  }
+  .stat-card::before{
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0; height:2px;
+    background:var(--stat-accent, var(--emerald));
+    opacity:0.8;
+  }
+  .stat-label{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--text-mid);
+    margin:0 0 10px;
+  }
+  .stat-value{
+    font-family:var(--font-display);
+    font-size:32px;
+    font-weight:700;
+    line-height:1;
+    color:var(--text-hi);
+  }
+  .stat-value .unit{
+    font-size:13px;
+    font-family:var(--font-body);
+    font-weight:500;
+    color:var(--text-mid);
+    margin-left:6px;
+  }
+  .stat-card.accent-emerald{--stat-accent:var(--emerald);}
+  .stat-card.accent-amber{--stat-accent:var(--amber);}
+  .stat-card.accent-crimson{--stat-accent:var(--crimson);}
+  .stat-card.accent-neutral{--stat-accent:#5D6773;}
+
+  /* ---------- main grid: form + records ---------- */
+  .main-grid{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:18px;
+    align-items:start;
+  }
+
+  .panel{
+    background:var(--obsidian-1);
+    border:1px solid var(--obsidian-3);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+  }
+
+  .panel-head{
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--obsidian-3);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .panel-head h2{
+    font-family:var(--font-display);
+    font-size:15px;
+    margin:0;
+    font-weight:600;
+  }
+  .panel-head .tag-count{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-mid);
+    background:var(--obsidian-2);
+    border:1px solid var(--obsidian-3);
+    padding:3px 8px;
+    border-radius:20px;
+  }
+
+  /* ---------- checkout form ---------- */
+  #checkout-form{
+    padding:18px 20px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .field label{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--text-mid);
+  }
+  .field .required{color:var(--emerald);}
+  .field input,
+  .field select,
+  .field textarea{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    background:var(--obsidian-2);
+    border:1px solid var(--obsidian-3);
+    color:var(--text-hi);
+    padding:10px 12px;
+    border-radius:var(--radius-sm);
+    width:100%;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .field textarea{resize:vertical; min-height:60px; font-family:var(--font-body);}
+  .field input::placeholder, .field textarea::placeholder{color:var(--text-low);}
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--emerald);
+    box-shadow:0 0 0 3px rgba(16,185,129,0.15);
+  }
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+
+  #checkout-form .btn-primary{
+    justify-content:center;
+    padding:12px 16px;
+    font-size:14px;
+    margin-top:4px;
+  }
+
+  .form-hint{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--text-low);
+    line-height:1.5;
+    margin-top:-4px;
+  }
+
+  /* ---------- records panel ---------- */
+  .records-toolbar{
+    padding:16px 20px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:center;
+    border-bottom:1px solid var(--obsidian-3);
+  }
+  .search-box{
+    flex:1 1 200px;
+    position:relative;
+    min-width:180px;
+  }
+  .search-box svg{
+    position:absolute; left:12px; top:50%; transform:translateY(-50%);
+    width:15px; height:15px; color:var(--text-low);
+  }
+  .search-box input{
+    width:100%;
+    font-family:var(--font-body);
+    font-size:13.5px;
+    background:var(--obsidian-2);
+    border:1px solid var(--obsidian-3);
+    color:var(--text-hi);
+    padding:9px 12px 9px 34px;
+    border-radius:var(--radius-sm);
+  }
+  .search-box input:focus{outline:none; border-color:var(--emerald); box-shadow:0 0 0 3px rgba(16,185,129,0.15);}
+
+  .filter-group{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .filter-btn{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.03em;
+    padding:8px 12px;
+    border-radius:20px;
+    border:1px solid var(--obsidian-3);
+    background:transparent;
+    color:var(--text-mid);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .filter-btn:hover{color:var(--text-hi); border-color:var(--text-mid);}
+  .filter-btn.active{
+    background:rgba(16,185,129,0.14);
+    border-color:var(--emerald);
+    color:var(--emerald);
+  }
+
+  /* ---------- records list (asset-tag styled rows) ---------- */
+  .records-list{
+    display:flex;
+    flex-direction:column;
+    max-height:none;
+  }
+  .empty-state{
+    padding:60px 20px;
+    text-align:center;
+    color:var(--text-low);
+  }
+  .empty-state svg{width:34px;height:34px; margin-bottom:12px; opacity:0.5;}
+  .empty-state p{margin:0; font-family:var(--font-mono); font-size:12.5px;}
+
+  .record{
+    display:flex;
+    border-bottom:1px solid var(--obsidian-3);
+    transition:background .15s ease;
+  }
+  .record:last-child{border-bottom:none;}
+  .record:hover{background:rgba(255,255,255,0.015);}
+
+  /* the "tag stub" — signature element: a perforated asset-tag look */
+  .record-stub{
+    width:88px;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:14px 8px;
+    border-right:1px dashed var(--obsidian-3);
+    position:relative;
+  }
+  .record-stub .dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--status-color, var(--text-low));
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--status-color, var(--text-low)) 18%, transparent);
+  }
+  .record-stub .id-num{
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--text-low);
+    letter-spacing:0.02em;
+  }
+
+  .record-body{
+    flex:1;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .record-info{min-width:220px; flex:2;}
+  .record-title{
+    font-family:var(--font-display);
+    font-size:14.5px;
+    font-weight:600;
+    margin:0 0 3px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .category-chip{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--text-mid);
+    background:var(--obsidian-2);
+    border:1px solid var(--obsidian-3);
+    padding:2px 7px;
+    border-radius:4px;
+  }
+  .record-sub{
+    margin:0;
+    font-size:12.5px;
+    color:var(--text-mid);
+  }
+  .record-sub b{color:var(--text-hi); font-weight:500;}
+
+  .record-dates{
+    flex:1.4;
+    min-width:200px;
+    display:flex;
+    gap:18px;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--text-mid);
+  }
+  .record-dates div span{display:block; color:var(--text-low); font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;}
+  .record-dates .due-warn{color:var(--amber);}
+  .record-dates .due-over{color:var(--crimson); font-weight:600;}
+
+  .record-notes{
+    flex-basis:100%;
+    margin-top:8px;
+    font-size:12px;
+    color:var(--text-low);
+    font-style:italic;
+    padding-left:2px;
+  }
+
+  .status-badge{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    padding:5px 10px;
+    border-radius:20px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    white-space:nowrap;
+  }
+  .status-badge.st-active{background:rgba(16,185,129,0.12); color:var(--emerald); border:1px solid rgba(16,185,129,0.35);}
+  .status-badge.st-overdue{background:rgba(239,68,68,0.12); color:var(--crimson); border:1px solid rgba(239,68,68,0.35);}
+  .status-badge.st-returned{background:rgba(93,103,115,0.14); color:var(--text-mid); border:1px solid var(--obsidian-3);}
+  .status-badge.st-duesoon{background:rgba(245,158,11,0.12); color:var(--amber); border:1px solid rgba(245,158,11,0.35);}
+
+  .record-actions{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .btn-return{
+    font-family:var(--font-body);
+    font-size:12px;
+    font-weight:600;
+    padding:8px 12px;
+    border-radius:var(--radius-sm);
+    border:1px solid rgba(16,185,129,0.4);
+    background:rgba(16,185,129,0.08);
+    color:var(--emerald);
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  .btn-return:hover{background:rgba(16,185,129,0.18);}
+
+  footer.foot-note{
+    margin-top:36px;
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-low);
+  }
+
+  /* ---------- toast ---------- */
+  #toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--obsidian-2);
+    border:1px solid var(--obsidian-3);
+    color:var(--text-hi);
+    padding:12px 18px;
+    border-radius:var(--radius-sm);
+    font-size:13px;
+    font-family:var(--font-body);
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    z-index:999;
+    max-width:90vw;
+  }
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  #toast .dot{width:8px;height:8px;border-radius:50%; background:var(--emerald); flex-shrink:0;}
+  #toast.error .dot{background:var(--crimson);}
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px){
+    .stats{grid-template-columns:repeat(2, 1fr);}
+    .main-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width: 560px){
+    .stats{grid-template-columns:1fr 1fr;}
+    .stat-value{font-size:26px;}
+    .field-row{grid-template-columns:1fr;}
+    .record-body{flex-direction:column; align-items:flex-start;}
+    .record-actions{width:100%; justify-content:space-between; margin-top:6px;}
+    .record-stub{width:64px;}
+    .topbar{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ============ HEADER ============ -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#04140D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+      </div>
+      <div>
+        <h1>Campus Equipment &amp; Asset Tracker</h1>
+        <p>Checkout Log &middot; Inventory Ledger</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="btn-export-json" title="Export all records as JSON">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export JSON
+      </button>
+      <button class="btn btn-ghost" id="btn-export-csv" title="Export all records as CSV">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </button>
+      <label class="btn btn-ghost" for="import-file" title="Import records from a JSON backup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import JSON
+      </label>
+      <input type="file" id="import-file" accept="application/json">
+    </div>
+  </div>
+
+  <!-- ============ STATS DASHBOARD ============ -->
+  <div class="stats">
+    <div class="stat-card accent-emerald">
+      <p class="stat-label">Total Assets Registered</p>
+      <div class="stat-value" id="stat-total">0</div>
+    </div>
+    <div class="stat-card accent-amber">
+      <p class="stat-label">Currently Checked Out</p>
+      <div class="stat-value" id="stat-active">0</div>
+    </div>
+    <div class="stat-card accent-crimson">
+      <p class="stat-label">Overdue Items</p>
+      <div class="stat-value" id="stat-overdue">0</div>
+    </div>
+    <div class="stat-card accent-neutral">
+      <p class="stat-label">Returned Today</p>
+      <div class="stat-value" id="stat-returned-today">0</div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN GRID: FORM + RECORDS ============ -->
+  <div class="main-grid">
+
+    <!-- ---- Checkout logger panel ---- -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Log a Checkout</h2>
+      </div>
+      <form id="checkout-form">
+        <div class="field">
+          <label for="f-borrower">Borrower Name <span class="required">*</span></label>
+          <input type="text" id="f-borrower" placeholder="e.g. Naty Gana" required>
+        </div>
+        <div class="field">
+          <label for="f-studentid">Student / Member ID <span class="required">*</span></label>
+          <input type="text" id="f-studentid" placeholder="e.g. 2023-00214-CS" required>
+        </div>
+        <div class="field">
+          <label for="f-equipment">Equipment Name / ID <span class="required">*</span></label>
+          <input type="text" id="f-equipment" placeholder="e.g. Sony Camera Kit #04" required>
+        </div>
+        <div class="field">
+          <label for="f-category">Category</label>
+          <select id="f-category">
+            <option value="Photo/Video">Photo / Video</option>
+            <option value="Audio">Audio</option>
+            <option value="Electronics/Prototyping">Electronics / Prototyping</option>
+            <option value="Computing">Computing</option>
+            <option value="Event Gear">Event Gear</option>
+            <option value="Lab Instrument">Lab Instrument</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-checkout-date">Checkout Date <span class="required">*</span></label>
+            <input type="date" id="f-checkout-date" required>
+          </div>
+          <div class="field">
+            <label for="f-due-date">Due Date <span class="required">*</span></label>
+            <input type="date" id="f-due-date" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-condition">Condition Notes (on checkout)</label>
+          <textarea id="f-condition" placeholder="e.g. Minor scratch on lens hood, all cables present"></textarea>
+        </div>
+        <div class="form-hint">* Required fields. Records are saved to this browser's local storage only.</div>
+        <button type="submit" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Log Checkout
+        </button>
+      </form>
+    </div>
+
+    <!-- ---- Records / Active loans panel ---- -->
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Loan Records &amp; Audit Trail</h2>
+        <span class="tag-count" id="record-count">0 records</span>
+      </div>
+      <div class="records-toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="search-input" placeholder="Search by borrower or equipment...">
+        </div>
+        <div class="filter-group" id="filter-group">
+          <button class="filter-btn active" data-filter="all">All Items</button>
+          <button class="filter-btn" data-filter="active">Active Loans</button>
+          <button class="filter-btn" data-filter="overdue">Overdue</button>
+          <button class="filter-btn" data-filter="returned">Returned</button>
+        </div>
+      </div>
+      <div class="records-list" id="records-list">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="foot-note">Data lives only in this browser &mdash; export regularly to keep a backup.</footer>
+</div>
+
+<div id="toast"><span class="dot"></span><span id="toast-msg"></span></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     STORAGE LAYER
+     Everything persists to localStorage under one key so the
+     whole ledger can be exported/imported as a single blob.
+     ============================================================ */
+  const STORAGE_KEY = "cat_asset_records_v1";
+
+  function loadRecords(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(err){
+      console.error("Failed to read records from localStorage:", err);
+      return [];
+    }
+  }
+
+  function saveRecords(records){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  let records = loadRecords();
+  let activeFilter = "all";
+  let searchTerm = "";
+
+  /* ============================================================
+     HELPERS
+     ============================================================ */
+  function todayISO(){
+    const d = new Date();
+    return d.toISOString().slice(0,10);
+  }
+
+  function formatDate(iso){
+    if(!iso) return "—";
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString(undefined, { month:"short", day:"numeric", year:"numeric" });
+  }
+
+  function daysBetween(a, b){
+    const msPerDay = 1000*60*60*24;
+    return Math.round((new Date(b) - new Date(a)) / msPerDay);
+  }
+
+  function genId(){
+    return "AST-" + Date.now().toString(36).toUpperCase().slice(-6) + Math.floor(Math.random()*90+10);
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str == null ? "" : String(str);
+    return div.innerHTML;
+  }
+
+  function showToast(msg, isError){
+    const toast = document.getElementById("toast");
+    const msgEl = document.getElementById("toast-msg");
+    msgEl.textContent = msg;
+    toast.classList.toggle("error", !!isError);
+    toast.classList.add("show");
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove("show"), 2600);
+  }
+
+  /* Derives a record's live status. Records are either "active"
+     or "returned" in storage; overdue is computed on the fly so
+     it always reflects today's date, not the date it was logged. */
+  function deriveStatus(record){
+    if(record.status === "returned") return "returned";
+    const today = todayISO();
+    if(record.dueDate < today) return "overdue";
+    const daysLeft = daysBetween(today, record.dueDate);
+    if(daysLeft <= 2) return "duesoon";
+    return "active";
+  }
+
+  /* ============================================================
+     STATS
+     ============================================================ */
+  function renderStats(){
+    const today = todayISO();
+
+    // "Total Assets Registered" counts distinct equipment items
+    // that have ever passed through the ledger (by name/ID string),
+    // not the number of checkout events.
+    const distinctAssets = new Set(records.map(r => r.equipmentName.trim().toLowerCase()));
+    const totalAssets = distinctAssets.size;
+
+    const checkedOut = records.filter(r => r.status === "active").length;
+    const overdue = records.filter(r => deriveStatus(r) === "overdue").length;
+    const returnedToday = records.filter(r => r.status === "returned" && r.returnDate === today).length;
+
+    document.getElementById("stat-total").textContent = totalAssets;
+    document.getElementById("stat-active").textContent = checkedOut;
+    document.getElementById("stat-overdue").textContent = overdue;
+    document.getElementById("stat-returned-today").textContent = returnedToday;
+  }
+
+  /* ============================================================
+     RENDER RECORDS LIST
+     ============================================================ */
+  const STATUS_META = {
+    active:   { label:"Active",    class:"st-active",   color:"var(--emerald)" },
+    duesoon:  { label:"Due Soon",  class:"st-duesoon",  color:"var(--amber)" },
+    overdue:  { label:"Overdue",   class:"st-overdue",  color:"var(--crimson)" },
+    returned: { label:"Returned",  class:"st-returned", color:"var(--text-low)" }
+  };
+
+  function getVisibleRecords(){
+    return records
+      .filter(r => {
+        const status = deriveStatus(r);
+        if(activeFilter === "active" && !(status === "active" || status === "duesoon")) return false;
+        if(activeFilter === "overdue" && status !== "overdue") return false;
+        if(activeFilter === "returned" && status !== "returned") return false;
+        return true;
+      })
+      .filter(r => {
+        if(!searchTerm) return true;
+        const haystack = (r.borrowerName + " " + r.equipmentName).toLowerCase();
+        return haystack.includes(searchTerm);
+      })
+      .sort((a,b) => {
+        // newest checkout first
+        return b.checkoutDate.localeCompare(a.checkoutDate) || b.id.localeCompare(a.id);
+      });
+  }
+
+  function renderRecords(){
+    const list = document.getElementById("records-list");
+    const visible = getVisibleRecords();
+
+    document.getElementById("record-count").textContent =
+      visible.length + (visible.length === 1 ? " record" : " records");
+
+    if(visible.length === 0){
+      list.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>
+          <p>No matching records. Log a checkout to get started.</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = visible.map(r => {
+      const status = deriveStatus(r);
+      const meta = STATUS_META[status];
+      const isOverdue = status === "overdue";
+      const isDueSoon = status === "duesoon";
+
+      const dueClass = isOverdue ? "due-over" : (isDueSoon ? "due-warn" : "");
+      const dueDaysNote = isOverdue
+        ? `(${daysBetween(r.dueDate, todayISO())}d late)`
+        : (isDueSoon ? "(due soon)" : "");
+
+      const returnBlock = r.status === "returned"
+        ? `<div><span>Returned</span>${formatDate(r.returnDate)}</div>`
+        : `<div><span>Due</span><span class="${dueClass}">${formatDate(r.dueDate)} ${dueDaysNote}</span></div>`;
+
+      const conditionInNote = r.status === "returned" && r.conditionIn
+        ? `Return condition: ${escapeHtml(r.conditionIn)}`
+        : "";
+      const conditionOutNote = r.conditionOut ? `Checkout condition: ${escapeHtml(r.conditionOut)}` : "";
+      const notesLine = [conditionOutNote, conditionInNote].filter(Boolean).join(" &nbsp;&middot;&nbsp; ");
+
+      const actionBtn = r.status === "active"
+        ? `<button class="btn-return" data-action="return" data-id="${r.id}">Mark as Returned</button>`
+        : "";
+
+      return `
+      <div class="record">
+        <div class="record-stub">
+          <span class="dot" style="--status-color:${meta.color}"></span>
+          <span class="id-num">${escapeHtml(r.id)}</span>
+        </div>
+        <div class="record-body">
+          <div class="record-info">
+            <p class="record-title">${escapeHtml(r.equipmentName)} <span class="category-chip">${escapeHtml(r.category)}</span></p>
+            <p class="record-sub"><b>${escapeHtml(r.borrowerName)}</b> &middot; ID ${escapeHtml(r.studentId)}</p>
+          </div>
+          <div class="record-dates">
+            <div><span>Checked Out</span>${formatDate(r.checkoutDate)}</div>
+            ${returnBlock}
+          </div>
+          <span class="status-badge ${meta.class}">${meta.label}</span>
+          <div class="record-actions">
+            ${actionBtn}
+            <button class="btn-danger-text" data-action="delete" data-id="${r.id}" title="Delete this record">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+          ${notesLine ? `<div class="record-notes">${notesLine}</div>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderAll(){
+    renderStats();
+    renderRecords();
+  }
+
+  /* ============================================================
+     EVENTS: form submit (new checkout)
+     ============================================================ */
+  document.getElementById("checkout-form").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const borrowerName = document.getElementById("f-borrower").value.trim();
+    const studentId = document.getElementById("f-studentid").value.trim();
+    const equipmentName = document.getElementById("f-equipment").value.trim();
+    const category = document.getElementById("f-category").value;
+    const checkoutDate = document.getElementById("f-checkout-date").value;
+    const dueDate = document.getElementById("f-due-date").value;
+    const conditionOut = document.getElementById("f-condition").value.trim();
+
+    if(!borrowerName || !studentId || !equipmentName || !checkoutDate || !dueDate){
+      showToast("Please fill in all required fields.", true);
+      return;
+    }
+    if(dueDate < checkoutDate){
+      showToast("Due date can't be before the checkout date.", true);
+      return;
+    }
+
+    records.push({
+      id: genId(),
+      borrowerName,
+      studentId,
+      equipmentName,
+      category,
+      checkoutDate,
+      dueDate,
+      conditionOut,
+      status: "active",
+      returnDate: null,
+      conditionIn: null
+    });
+
+    saveRecords(records);
+    renderAll();
+    showToast(`Logged checkout of "${equipmentName}" to ${borrowerName}.`);
+    this.reset();
+    document.getElementById("f-checkout-date").value = todayISO();
+  });
+
+  /* ============================================================
+     EVENTS: record actions (return / delete) via delegation
+     ============================================================ */
+  document.getElementById("records-list").addEventListener("click", function(e){
+    const btn = e.target.closest("button[data-action]");
+    if(!btn) return;
+    const id = btn.getAttribute("data-id");
+    const action = btn.getAttribute("data-action");
+    const record = records.find(r => r.id === id);
+    if(!record) return;
+
+    if(action === "return"){
+      const condition = prompt(
+        "Update return condition (e.g. Good, Minor Wear, Needs Maintenance):",
+        "Good"
+      );
+      if(condition === null) return; // user cancelled
+      record.status = "returned";
+      record.returnDate = todayISO();
+      record.conditionIn = condition.trim() || "Not specified";
+      saveRecords(records);
+      renderAll();
+      showToast(`"${record.equipmentName}" marked as returned.`);
+    }
+
+    if(action === "delete"){
+      const confirmed = confirm(`Delete this record for "${record.equipmentName}"? This can't be undone.`);
+      if(!confirmed) return;
+      records = records.filter(r => r.id !== id);
+      saveRecords(records);
+      renderAll();
+      showToast("Record deleted.");
+    }
+  });
+
+  /* ============================================================
+     EVENTS: search + filters
+     ============================================================ */
+  document.getElementById("search-input").addEventListener("input", function(){
+    searchTerm = this.value.trim().toLowerCase();
+    renderRecords();
+  });
+
+  document.getElementById("filter-group").addEventListener("click", function(e){
+    const btn = e.target.closest(".filter-btn");
+    if(!btn) return;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilter = btn.getAttribute("data-filter");
+    renderRecords();
+  });
+
+  /* ============================================================
+     EXPORT: JSON
+     ============================================================ */
+  document.getElementById("btn-export-json").addEventListener("click", function(){
+    if(records.length === 0){
+      showToast("No records to export yet.", true);
+      return;
+    }
+    const blob = new Blob([JSON.stringify(records, null, 2)], { type: "application/json" });
+    downloadBlob(blob, `asset-tracker-export-${todayISO()}.json`);
+    showToast("Exported records as JSON.");
+  });
+
+  /* ============================================================
+     EXPORT: CSV
+     ============================================================ */
+  document.getElementById("btn-export-csv").addEventListener("click", function(){
+    if(records.length === 0){
+      showToast("No records to export yet.", true);
+      return;
+    }
+    const columns = ["id","borrowerName","studentId","equipmentName","category","checkoutDate","dueDate","conditionOut","status","returnDate","conditionIn"];
+    const csvRows = [columns.join(",")];
+
+    records.forEach(r => {
+      const row = columns.map(col => csvEscape(r[col]));
+      csvRows.push(row.join(","));
+    });
+
+    const blob = new Blob([csvRows.join("\r\n")], { type: "text/csv" });
+    downloadBlob(blob, `asset-tracker-export-${todayISO()}.csv`);
+    showToast("Exported records as CSV.");
+  });
+
+  function csvEscape(value){
+    if(value === null || value === undefined) return "";
+    const str = String(value);
+    if(/[",\r\n]/.test(str)){
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  }
+
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* ============================================================
+     IMPORT: JSON
+     Expects an array of record objects matching this app's shape.
+     Imported records are merged in; duplicate IDs are skipped.
+     ============================================================ */
+  document.getElementById("import-file").addEventListener("change", function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      try{
+        const parsed = JSON.parse(evt.target.result);
+        if(!Array.isArray(parsed)) throw new Error("File does not contain a records array.");
+
+        const existingIds = new Set(records.map(r => r.id));
+        let added = 0, skipped = 0;
+
+        parsed.forEach(item => {
+          if(!item || typeof item !== "object") return;
+          if(!item.borrowerName || !item.equipmentName || !item.checkoutDate || !item.dueDate){
+            skipped++;
+            return;
+          }
+          const id = item.id && !existingIds.has(item.id) ? item.id : genId();
+          existingIds.add(id);
+          records.push({
+            id,
+            borrowerName: String(item.borrowerName),
+            studentId: String(item.studentId || ""),
+            equipmentName: String(item.equipmentName),
+            category: String(item.category || "Other"),
+            checkoutDate: item.checkoutDate,
+            dueDate: item.dueDate,
+            conditionOut: item.conditionOut || "",
+            status: item.status === "returned" ? "returned" : "active",
+            returnDate: item.returnDate || null,
+            conditionIn: item.conditionIn || null
+          });
+          added++;
+        });
+
+        saveRecords(records);
+        renderAll();
+        showToast(`Imported ${added} record(s)${skipped ? `, skipped ${skipped} invalid` : ""}.`);
+      }catch(err){
+        console.error("Import failed:", err);
+        showToast("Import failed: file isn't a valid records export.", true);
+      }finally{
+        e.target.value = ""; // allow re-importing the same file later
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  document.getElementById("f-checkout-date").value = todayISO();
+  document.getElementById("f-due-date").min = todayISO();
+  renderAll();
+
+})();
+</script>
+</body>
+</html>
